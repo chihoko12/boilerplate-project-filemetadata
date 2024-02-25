@@ -1,5 +1,6 @@
 var express = require('express');
 var cors = require('cors');
+const multer = require('multer');
 require('dotenv').config()
 
 var app = express();
@@ -7,12 +8,29 @@ var app = express();
 app.use(cors());
 app.use('/public', express.static(process.cwd() + '/public'));
 
+
+// set up multer storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 app.get('/', function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
+// handle file upload and extract metadata
+app.post('/api/fileanalyse', upload.single('upfile'), function (req,res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
 
-
+  // Extract metadata
+  const metadata = {
+    name: req.file.originalname,
+    type: req.file.mimetype,
+    size: req.file.size
+  };
+  res.json(metadata);
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, function () {
